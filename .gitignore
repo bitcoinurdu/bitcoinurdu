@@ -1,0 +1,8 @@
+node_modules
+.next
+.wrangler
+deploy_out
+out
+.env.local
+.env.*.local
+*.tsbuildinfo

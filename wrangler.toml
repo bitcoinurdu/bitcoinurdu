@@ -1,0 +1,9 @@
+name = "bitcoinurdu"
+compatibility_date = "2024-01-01"
+pages_build_output_dir = "out"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "bitcoinurdu-db"
+database_id = "d75a4bd3-5446-4ba3-a063-97e1e7de1d2e"
+migrations_dir = "migrations"
