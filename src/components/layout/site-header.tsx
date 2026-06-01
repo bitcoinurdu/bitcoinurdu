@@ -4,13 +4,10 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { useTheme } from 'next-themes';
 import {
   Menu,
   X,
   Search,
-  Moon,
-  Sun,
   ChevronDown,
   Globe,
   Wallet,
@@ -34,6 +31,7 @@ const navTexts: Record<string, { mainNav: { label: string; href: string }[]; dro
     mainNav: [
       { label: '⛏️ Mining', href: '/mining' },
       { label: '💼 Jobs', href: '/jobs' },
+      { label: '🚰 Faucet', href: '/faucet' },
     ],
     dropdowns: [
       {
@@ -48,18 +46,19 @@ const navTexts: Record<string, { mainNav: { label: string; href: string }[]; dro
           { label: '📁 Categories', href: '/coins/categories' },
         ],
       },
-      {
-        label: '🎁 Airdrops',
-        href: '/airdrops',
-        items: [
-          { label: '🎁 Tamam Airdrops', href: '/airdrops' },
-          { label: '✅ Active', href: '/airdrops/active' },
-          { label: '📅 Upcoming', href: '/airdrops/upcoming' },
-          { label: '✔️ Confirmed', href: '/airdrops/confirmed' },
-          { label: '🔍 Airdrop Checker', href: '/airdrop-checker' },
-          { label: '💼 Portfolio Tracker', href: '/portfolio' },
-        ],
-      },
+{
+  label: '🎁 Airdrops',
+  href: '/airdrops',
+  items: [
+    { label: '🎁 Tamam Airdrops', href: '/airdrops' },
+    { label: '✅ Active', href: '/airdrops/active' },
+    { label: '📅 Upcoming', href: '/airdrops/upcoming' },
+    { label: '✔️ Confirmed', href: '/airdrops/confirmed' },
+    { label: '🔍 Airdrop Checker', href: '/airdrop-checker' },
+    { label: '🚰 Faucet', href: '/faucet' },
+    { label: '💼 Portfolio Tracker', href: '/portfolio' },
+  ],
+},
       {
         label: '📊 Markets',
         href: '/markets',
@@ -85,11 +84,12 @@ const navTexts: Record<string, { mainNav: { label: string; href: string }[]; dro
       },
     ],
   },
-  ur: {
-    mainNav: [
-      { label: '⛏️ Mining', href: '/mining' },
-      { label: 'Jobs', href: '/jobs' },
-    ],
+   ur: {
+     mainNav: [
+       { label: '⛏️ Mining', href: '/mining' },
+       { label: 'Jobs', href: '/jobs' },
+       { label: '🚰 Faucet', href: '/faucet' },
+     ],
     dropdowns: [
       {
         label: 'کوائنز',
@@ -138,10 +138,11 @@ const navTexts: Record<string, { mainNav: { label: string; href: string }[]; dro
     ],
   },
   ps: {
-    mainNav: [
-      { label: '⛏️ Mining', href: '/mining' },
-      { label: 'دندې', href: '/jobs' },
-    ],
+     mainNav: [
+       { label: '⛏️ Mining', href: '/mining' },
+       { label: 'Jobs', href: '/jobs' },
+       { label: '🚰 Faucet', href: '/faucet' },
+     ],
     dropdowns: [
       {
         label: 'سکي',
@@ -189,11 +190,12 @@ const navTexts: Record<string, { mainNav: { label: string; href: string }[]; dro
       },
     ],
   },
-  sd: {
-    mainNav: [
-      { label: '⛏️ Mining', href: '/mining' },
-      { label: 'ڪم', href: '/jobs' },
-    ],
+   sd: {
+     mainNav: [
+       { label: '⛏️ Mining', href: '/mining' },
+       { label: 'ڪم', href: '/jobs' },
+       { label: '🚰 Faucet', href: '/faucet' },
+     ],
     dropdowns: [
       {
         label: 'سڪا',
@@ -241,11 +243,12 @@ const navTexts: Record<string, { mainNav: { label: string; href: string }[]; dro
       },
     ],
   },
-  es: {
-    mainNav: [
-      { label: '⛏️ Minería', href: '/mining' },
-      { label: 'Empleos', href: '/jobs' },
-    ],
+   es: {
+     mainNav: [
+       { label: '⛏️ Minería', href: '/mining' },
+       { label: 'Empleos', href: '/jobs' },
+       { label: '🚰 Faucet', href: '/faucet' },
+     ],
     dropdowns: [
       {
         label: 'Monedas',
@@ -293,11 +296,12 @@ const navTexts: Record<string, { mainNav: { label: string; href: string }[]; dro
       },
     ],
   },
-  ar: {
-    mainNav: [
-      { label: '⛏️ تعدين', href: '/mining' },
-      { label: 'الوظائف', href: '/jobs' },
-    ],
+   ar: {
+     mainNav: [
+       { label: '⛏️ تعدين', href: '/mining' },
+       { label: 'الوظائف', href: '/jobs' },
+       { label: '🚰 Faucet', href: '/faucet' },
+     ],
     dropdowns: [
       {
         label: 'العملات',
@@ -345,11 +349,12 @@ const navTexts: Record<string, { mainNav: { label: string; href: string }[]; dro
       },
     ],
   },
-  pt: {
-    mainNav: [
-      { label: '⛏️ Mineração', href: '/mining' },
-      { label: 'Empregos', href: '/jobs' },
-    ],
+   pt: {
+     mainNav: [
+       { label: '⛏️ Mineração', href: '/mining' },
+       { label: 'Empregos', href: '/jobs' },
+       { label: '🚰 Faucet', href: '/faucet' },
+     ],
     dropdowns: [
       {
         label: 'Moedas',
@@ -397,11 +402,12 @@ const navTexts: Record<string, { mainNav: { label: string; href: string }[]; dro
       },
     ],
   },
-  en: {
-    mainNav: [
-      { label: '⛏️ Mining', href: '/mining' },
-      { label: 'Jobs', href: '/jobs' },
-    ],
+   en: {
+     mainNav: [
+       { label: '⛏️ Mining', href: '/mining' },
+       { label: 'Jobs', href: '/jobs' },
+       { label: '🚰 Faucet', href: '/faucet' },
+     ],
     dropdowns: [
       {
         label: 'Coins',
@@ -452,11 +458,12 @@ const navTexts: Record<string, { mainNav: { label: string; href: string }[]; dro
       },
     ],
   },
-  hi: {
-    mainNav: [
-      { label: '⛏️ Mining', href: '/mining' },
-      { label: 'Jobs', href: '/jobs' },
-    ],
+   hi: {
+     mainNav: [
+       { label: '⛏️ Mining', href: '/mining' },
+       { label: 'Jobs', href: '/jobs' },
+       { label: '🚰 Faucet', href: '/faucet' },
+     ],
     dropdowns: [
       {
         label: 'सिक्के',
@@ -504,11 +511,12 @@ const navTexts: Record<string, { mainNav: { label: string; href: string }[]; dro
       },
     ],
   },
-  fr: {
-    mainNav: [
-      { label: '⛏️ Mining', href: '/mining' },
-      { label: 'Jobs', href: '/jobs' },
-    ],
+   fr: {
+     mainNav: [
+       { label: '⛏️ Mining', href: '/mining' },
+       { label: 'Jobs', href: '/jobs' },
+       { label: '🚰 Faucet', href: '/faucet' },
+     ],
     dropdowns: [
       {
         label: 'Monnaies',
@@ -820,7 +828,6 @@ const navTexts: Record<string, { mainNav: { label: string; href: string }[]; dro
 
 export function SiteHeader() {
   const pathname = usePathname();
-  const { setTheme, theme } = useTheme();
   const { language, currency, setLanguage, setCurrency, user, setUser } = useAppStore();
   const { settings } = useSiteSettings();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -833,6 +840,7 @@ export function SiteHeader() {
   const [lang, setLang] = useState(language || 'roman');
   const [announcement, setAnnouncement] = useState<{ text: string; type: 'airdrop' | 'job' | 'manual'; link?: string; useHtml?: boolean; htmlContent?: string } | null>(null);
   const [announcementDismissed, setAnnouncementDismissed] = useState(false);
+  const [openMobileDropdown, setOpenMobileDropdown] = useState<string | null>(null);
 
   const siteName = settings.siteName || 'BitcoinUrdu';
   const siteNameParts = siteName.split(/(?=[A-Z])/);
@@ -906,13 +914,55 @@ export function SiteHeader() {
   }, [settings.announcements]);
 
   const texts = navTexts[lang] || navTexts.roman;
-  const mainNavItems = texts.mainNav;
-  const dropdownItems = texts.dropdowns;
+  const mainNavItems = texts.mainNav.filter((i) => i.href !== '/mining' && i.href !== '/jobs');
+    const dropdownItems = [
+     {
+       label: '⛏️ Mining',
+       href: '/mining',
+       items: [
+         { label: 'Overview', href: '/mining' },
+         { label: 'ASIC Mining', href: '/mining/asic' },
+         { label: 'GPU Mining', href: '/mining/gpu' },
+         { label: 'Calculator', href: '/mining/calculator' },
+         { label: 'Profitability', href: '/mining/profitability' },
+         { label: 'Pools', href: '/mining/pools' },
+         { label: 'Guides', href: '/mining/guides' },
+       ],
+     },
+    {
+      label: '💼 Jobs',
+      href: '/jobs',
+      items: [
+        { label: 'All Jobs', href: '/jobs' },
+        { label: 'New Jobs', href: '/jobs/new' },
+        { label: 'Ended', href: '/jobs/ended' },
+        { label: 'Upcoming', href: '/jobs/upcoming' },
+      ],
+    },
+     ...texts.dropdowns.map((d) => {
+       if (d.label.includes('Airdrop') || d.href === '/airdrops') {
+         return {
+           ...d,
+           items: [
+             ...d.items,
+             { label: '🟢 Onchain GM', href: '/airdrops/onchain-gm' },
+              { label: '⏪ Retroactive', href: '/airdrops/retroactive' },
+              { label: '🚰 Testnet Faucet', href: '/faucet' },
+           ],
+         };
+       }
+       return d;
+     }),
+  ];
 
   const handleLogout = () => {
     localStorage.removeItem('bu_auth_token');
+    localStorage.removeItem('bu_user');
+    localStorage.removeItem('bu_portfolio');
+    localStorage.removeItem('bu_watchlist');
     setUser(null);
     setShowUserMenu(false);
+    window.location.href = '/';
   };
 
   const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
@@ -1142,14 +1192,6 @@ export function SiteHeader() {
           )}
 
           <button
-            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-            className="relative rounded-lg p-1.5 hover:bg-accent h-8 w-8 flex items-center justify-center"
-          >
-            <Sun className="h-4 w-4 transition-all dark:hidden" />
-            <Moon className="h-4 w-4 transition-all hidden dark:block" />
-          </button>
-
-          <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             className="xl:hidden rounded-lg p-1.5 hover:bg-accent"
           >
@@ -1161,29 +1203,42 @@ export function SiteHeader() {
       {mobileMenuOpen && (
         <div className="xl:hidden border-t bg-background">
           <nav className="mx-auto w-full max-w-full px-2 py-3 space-y-1">
-            {dropdownItems.map((dropdown) => (
-              <div key={dropdown.label} className="py-1">
-                <Link
-                  href={dropdown.href}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="block px-3 py-2 text-sm font-semibold text-foreground"
-                >
-                  {dropdown.label}
-                </Link>
-                <div className="ml-4 space-y-0.5">
-                  {dropdown.items.map((item) => (
+            {dropdownItems.map((dropdown) => {
+              const isOpen = openMobileDropdown === dropdown.label;
+              return (
+                <div key={dropdown.label} className="py-1">
+                  <div className="flex items-center">
                     <Link
-                      key={item.href}
-                      href={item.href}
+                      href={dropdown.href}
                       onClick={() => setMobileMenuOpen(false)}
-                      className="block px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground rounded-md"
+                      className="flex-1 px-3 py-2 text-sm font-semibold text-foreground"
                     >
-                      {item.label}
+                      {dropdown.label}
                     </Link>
-                  ))}
+                    <button
+                      onClick={() => setOpenMobileDropdown(isOpen ? null : dropdown.label)}
+                      className="px-3 py-2 text-sm text-muted-foreground hover:text-foreground"
+                    >
+                      <ChevronDown className={cn('h-4 w-4 transition-transform', isOpen && 'rotate-180')} />
+                    </button>
+                  </div>
+                  {isOpen && (
+                    <div className="ml-4 space-y-0.5 animate-in slide-in-from-top-1">
+                      {dropdown.items.map((item) => (
+                        <Link
+                          key={item.href}
+                          href={item.href}
+                          onClick={() => setMobileMenuOpen(false)}
+                          className="block px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground rounded-md"
+                        >
+                          {item.label}
+                        </Link>
+                      ))}
+                    </div>
+                  )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
             {mainNavItems.map((item) => (
               <Link
                 key={item.href}

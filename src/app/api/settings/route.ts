@@ -38,7 +38,17 @@ const DEFAULTS: Record<string, string> = {
     website: 'https://bitcoinurdu.com',
   }),
   announcements: '[]',
-  ad_slots: '[]',
+  ad_slots: JSON.stringify([
+    { id: 'mainpage', page: 'mainpage', name: 'Homepage Top Banner', position: 'header-728x90', size: '728x90', code: '', enabled: true, priority: 1 },
+    { id: 'coins', page: 'coins', name: 'Coins Page Top', position: 'sidebar-300x250', size: '300x250', code: '', enabled: true, priority: 2 },
+    { id: 'blog', page: 'blog', name: 'Blog Page', position: 'sponsored-article', size: 'native', code: '', enabled: true, priority: 3 },
+    { id: 'learn', page: 'learn', name: 'Learn Bitcoin', position: 'inline-336x280', size: '336x280', code: '', enabled: true, priority: 4 },
+    { id: 'airdrops', page: 'airdrops', name: 'Airdrops', position: 'inline-336x280', size: '336x280', code: '', enabled: true, priority: 5 },
+    { id: 'jobs', page: 'jobs', name: 'Jobs', position: 'inline-336x280', size: '336x280', code: '', enabled: true, priority: 6 },
+    { id: 'markets', page: 'markets', name: 'Markets', position: 'inline-336x280', size: '336x280', code: '', enabled: true, priority: 7 },
+    { id: 'news', page: 'news', name: 'News Page', position: 'inline-336x280', size: '336x280', code: '', enabled: true, priority: 8 },
+    { id: 'research', page: 'research', name: 'Research', position: 'inline-336x280', size: '336x280', code: '', enabled: true, priority: 9 },
+  ]),
   mining_hardware: '[]',
   affiliate_links: '[]',
   courses: '[]',
@@ -114,6 +124,11 @@ async function getAllSettings(): Promise<Record<string, string>> {
   }
 
   Object.assign(settings, persisted);
+
+  if (settings.ad_slots === '[]' || settings.ad_slots === JSON.stringify([])) {
+    settings.ad_slots = DEFAULTS.ad_slots;
+  }
+
   return settings;
 }
 

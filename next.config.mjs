@@ -16,6 +16,24 @@ const nextConfig = {
     ],
     formats: ['image/avif', 'image/webp'],
   },
+  webpack: (config) => {
+    config.resolve = {
+      ...config.resolve,
+      fallback: {
+        ...config.resolve?.fallback,
+        '@solana/wallet-adapter-react': false,
+        '@farcaster/miniapp-sdk': false,
+        '@farcaster/mini-app-solana': false,
+      },
+    };
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      '@solana/wallet-adapter-react': false,
+      '@farcaster/miniapp-sdk': false,
+      '@farcaster/mini-app-solana': false,
+    };
+    return config;
+  },
 };
 
 export default nextConfig;

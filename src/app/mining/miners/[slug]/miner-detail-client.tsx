@@ -43,7 +43,7 @@ export function MinerDetailClient({ hardware: hw }: Props) {
         setCoinPrice(coinPriceUsd);
         setCoinChange(priceData?.usd_24h_change);
 
-        const r = calcGrossDaily(hw, coinPriceUsd, btcDiff.difficulty, btcDiff.blockReward);
+        const r = calcGrossDaily(hw, coinPriceUsd, btcDiff.difficulty, btcDiff.blockReward, elecCost);
         setProfit(r);
 
         if (btcDiff.source === 'live' && priceData) setDataStatus('live');
@@ -51,7 +51,7 @@ export function MinerDetailClient({ hardware: hw }: Props) {
         else setDataStatus('cached');
       } catch {
         if (!mounted) return;
-        const r = calcGrossDaily(hw, 65000, 92300000000000, 3.125);
+        const r = calcGrossDaily(hw, 65000, 92300000000000, 3.125, elecCost);
         setProfit(r);
         setCoinPrice(65000);
         setDataStatus('fallback');

@@ -184,15 +184,17 @@ const footerTexts: Record<string, Record<string, string>> = {
 };
 
 const footerLinks: Record<string, Record<string, { label: string; href: string }[]>> = {
-  roman: {
-    products: [
-      { label: '🪙 Coins & Prices', href: '/coins' },
-      { label: '🎁 Free Airdrops', href: '/airdrops' },
-      { label: '⛏️ Mining', href: '/mining' },
-      { label: '📊 Global Markets', href: '/markets' },
-      { label: '💼 Portfolio Tracker', href: '/portfolio' },
-      { label: '🔔 Price Alerts', href: '/alerts' },
-    ],
+    roman: {
+      products: [
+        { label: '🪙 Coins & Prices', href: '/coins' },
+        { label: '🎁 Free Airdrops', href: '/airdrops' },
+        { label: '⛏️ Mining', href: '/mining' },
+        { label: '📊 Global Markets', href: '/markets' },
+        { label: '💼 Portfolio Tracker', href: '/portfolio' },
+        { label: '🔔 Price Alerts', href: '/alerts' },
+        { label: '🚰 Faucet', href: '/faucet' },
+        { label: '🟢 Onchain GM', href: '/onchain-gm' },
+      ],
     learn: [
       { label: '📖 Bitcoin Seekhen', href: '/learn-bitcoin' },
       { label: '✍️ Blog & Guides', href: '/blog' },
@@ -212,15 +214,17 @@ const footerLinks: Record<string, Record<string, { label: string; href: string }
       { label: '⚠️ Disclaimer', href: '/disclaimer' },
     ],
   },
-  ur: {
-    products: [
-      { label: '🪙 کوائنز اور قیمتیں', href: '/coins' },
-      { label: '🎁 مفت ایئرڈراپس', href: '/airdrops' },
-      { label: '⛏️ مائننگ', href: '/mining' },
-      { label: '📊 عالمی منڈیاں', href: '/markets' },
-      { label: '💼 پورٹ فولیو', href: '/portfolio' },
-      { label: '🔔 قیمت الرٹس', href: '/alerts' },
-    ],
+    ur: {
+      products: [
+        { label: '🪙 کوائنز اور قیمتیں', href: '/coins' },
+        { label: '🎁 مفت ایئرڈراپس', href: '/airdrops' },
+        { label: '⛏️ مائننگ', href: '/mining' },
+        { label: '📊 عالمی منڈیاں', href: '/markets' },
+        { label: '💼 پورٹ فولیو', href: '/portfolio' },
+        { label: '🔔 قیمت الرٹس', href: '/alerts' },
+        { label: '🚰 Faucet', href: '/faucet' },
+        { label: '🟢 Onchain GM', href: '/onchain-gm' },
+      ],
     learn: [
       { label: '📖 بٹ کوائن سیکھیں', href: '/learn-bitcoin' },
       { label: '✍️ بلاگ اور گائیڈز', href: '/blog' },
@@ -380,15 +384,17 @@ const footerLinks: Record<string, Record<string, { label: string; href: string }
       { label: '⚠️ Aviso Legal', href: '/disclaimer' },
     ],
   },
-  en: {
-    products: [
-      { label: '🪙 Coins & Prices', href: '/coins' },
-      { label: '🎁 Free Airdrops', href: '/airdrops' },
-      { label: '⛏️ Mining', href: '/mining' },
-      { label: '📊 Global Markets', href: '/markets' },
-      { label: '💼 Portfolio Tracker', href: '/portfolio' },
-      { label: '🔔 Price Alerts', href: '/alerts' },
-    ],
+    en: {
+      products: [
+        { label: '🪙 Coins & Prices', href: '/coins' },
+        { label: '🎁 Free Airdrops', href: '/airdrops' },
+        { label: '⛏️ Mining', href: '/mining' },
+        { label: '📊 Global Markets', href: '/markets' },
+        { label: '💼 Portfolio Tracker', href: '/portfolio' },
+        { label: '🔔 Price Alerts', href: '/alerts' },
+        { label: '🚰 Faucet', href: '/faucet' },
+        { label: '🟢 Onchain GM', href: '/onchain-gm' },
+      ],
     learn: [
       { label: '📖 Learn Bitcoin', href: '/learn-bitcoin' },
       { label: '✍️ Blog & Guides', href: '/blog' },

@@ -66,31 +66,73 @@ function normalizeToTH(hashrate: number, unit: string): number {
   }
 }
 
-export function calcGrossDaily(hardware: MiningHardware, coinPriceUsd: number, btcDifficulty: number, btcBlockReward: number): {
+function normalizeToHs(hashrate: number, unit: string): number {
+  switch (unit) {
+    case 'PH/s': return hashrate * 1e15;
+    case 'TH/s': return hashrate * 1e12;
+    case 'GH/s': return hashrate * 1e9;
+    case 'MH/s': return hashrate * 1e6;
+    case 'KH/s': return hashrate * 1e3;
+    default: return hashrate;
+  }
+}
+
+const COIN_NETWORK_DATA: Record<string, { networkHPS: number; blockTimeSec: number; blockReward: number }> = {
+  BTC: { networkHPS: 750e18, blockTimeSec: 600, blockReward: 3.125 },
+  KAS: { networkHPS: 850e18, blockTimeSec: 1, blockReward: 56.94 },
+  ZEC: { networkHPS: 16.4e15, blockTimeSec: 75, blockReward: 1.25 },
+  ALPH: { networkHPS: 3.5e15, blockTimeSec: 120, blockReward: 0.625 },
+  ETC: { networkHPS: 3e15, blockTimeSec: 13, blockReward: 2.56 },
+  LTC: { networkHPS: 800e12, blockTimeSec: 150, blockReward: 6.25 },
+  DOGE: { networkHPS: 900e12, blockTimeSec: 60, blockReward: 10000 },
+  KDA: { networkHPS: 500e15, blockTimeSec: 1, blockReward: 0.53 },
+  ZEN: { networkHPS: 5e9, blockTimeSec: 150, blockReward: 2.5 },
+  RXD: { networkHPS: 10e12, blockTimeSec: 60, blockReward: 375 },
+  NEXA: { networkHPS: 50e12, blockTimeSec: 10, blockReward: 10000 },
+  SC: { networkHPS: 800e15, blockTimeSec: 10, blockReward: 31250 },
+  CKB: { networkHPS: 300e12, blockTimeSec: 17, blockReward: 431 },
+  ALEO: { networkHPS: 200e12, blockTimeSec: 10, blockReward: 23.5 },
+};
+
+export function calcGrossDaily(hardware: MiningHardware, coinPriceUsd: number, btcDifficulty: number, btcBlockReward: number, electricityRate?: number): {
   grossUsd: number; powerCostUsd: number; netDailyUsd: number; paybackDays: number; earningsBtc: number;
 } {
   const primaryTicker = hardware.coins[0]?.ticker || 'BTC';
-  const electricityRate = GLOBAL_ELECTRICITY_RATE;
-  const sanitizedDifficulty = Number.isFinite(btcDifficulty) && btcDifficulty > 0 ? btcDifficulty : 92300000000000;
-  const sanitizedReward = Number.isFinite(btcBlockReward) && btcBlockReward > 0 ? btcBlockReward : 3.125;
-  const sanitizedPrice = Number.isFinite(coinPriceUsd) && coinPriceUsd > 0 ? coinPriceUsd : REFERENCE_PRICES[primaryTicker] || 65000;
+  const rate = electricityRate !== undefined && Number.isFinite(electricityRate) && electricityRate > 0 ? electricityRate : GLOBAL_ELECTRICITY_RATE;
   const powerWatts = Number.isFinite(hardware.power) && hardware.power > 0 ? hardware.power : 0;
-  const dailyElectricity = (powerWatts / 1000) * 24 * electricityRate;
+  const dailyElectricity = (powerWatts / 1000) * 24 * rate;
+  const minerPrice = Number.isFinite(hardware.cost) && hardware.cost > 0 ? hardware.cost : 0;
+
+  const networkData = COIN_NETWORK_DATA[primaryTicker];
+  if (networkData) {
+    const minerHs = normalizeToHs(hardware.hashrate, hardware.hashrateUnit);
+    if (minerHs > 0 && networkData.networkHPS > 0 && networkData.blockTimeSec > 0) {
+      const minerShare = minerHs / networkData.networkHPS;
+      const blocksPerDay = 86400 / networkData.blockTimeSec;
+      const dailyGross = minerShare * blocksPerDay * networkData.blockReward * coinPriceUsd;
+      const dailyNetProfit = dailyGross - dailyElectricity;
+      const paybackDays = dailyNetProfit > 0.01 && minerPrice > 0 ? Math.ceil(minerPrice / dailyNetProfit) : 9999;
+      return { grossUsd: dailyGross, powerCostUsd: dailyElectricity, netDailyUsd: dailyNetProfit, paybackDays, earningsBtc: dailyGross > 0 && coinPriceUsd > 0 ? dailyGross / coinPriceUsd : 0 };
+    }
+  }
 
   if (primaryTicker === 'BTC') {
     const hashrateTH = normalizeToTH(hardware.hashrate, hardware.hashrateUnit);
     const hashrateInHps = Number.isFinite(hashrateTH) && hashrateTH > 0 ? hashrateTH * 1e12 : 0;
+    const sanitizedDifficulty = Number.isFinite(btcDifficulty) && btcDifficulty > 0 ? btcDifficulty : 92300000000000;
+    const sanitizedReward = Number.isFinite(btcBlockReward) && btcBlockReward > 0 ? btcBlockReward : 3.125;
+    const sanitizedPrice = Number.isFinite(coinPriceUsd) && coinPriceUsd > 0 ? coinPriceUsd : 65000;
     const dailyGross = hashrateInHps > 0
       ? (hashrateInHps * 86400 * sanitizedReward) / (sanitizedDifficulty * Math.pow(2, 32)) * sanitizedPrice
       : 0;
     const dailyNetProfit = dailyGross - dailyElectricity;
-    const paybackDays = dailyNetProfit > 0.01 ? Math.ceil(hardware.cost / dailyNetProfit) : 9999;
+    const paybackDays = dailyNetProfit > 0.01 && minerPrice > 0 ? Math.ceil(minerPrice / dailyNetProfit) : 9999;
     return { grossUsd: dailyGross, powerCostUsd: dailyElectricity, netDailyUsd: dailyNetProfit, paybackDays, earningsBtc: dailyGross > 0 && sanitizedPrice > 0 ? dailyGross / sanitizedPrice : 0 };
   }
 
   const grossUsd = hardware.dailyProfit > 0 ? hardware.dailyProfit : 0;
   const dailyNetProfit = grossUsd - dailyElectricity;
-  const paybackDays = dailyNetProfit > 0.01 ? Math.ceil(hardware.cost / dailyNetProfit) : 9999;
+  const paybackDays = dailyNetProfit > 0.01 && minerPrice > 0 ? Math.ceil(minerPrice / dailyNetProfit) : 9999;
   return { grossUsd, powerCostUsd: dailyElectricity, netDailyUsd: dailyNetProfit, paybackDays, earningsBtc: 0 };
 }
 

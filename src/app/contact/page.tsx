@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import Link from 'next/link';
-import { Mail, Twitter, Send, CheckCircle, Shield, Briefcase, Megaphone, MessageSquare } from 'lucide-react';
+import { Mail, Twitter, Send, CheckCircle, Shield, Briefcase, Megaphone, MessageSquare, Loader2 } from 'lucide-react';
 
 const socialLinks = [
   {
@@ -50,17 +50,52 @@ export default function ContactPage() {
   const [formData, setFormData] = useState({ name: '', email: '', subject: '', message: '', type: 'contact' });
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const turnstileRef = useRef<HTMLDivElement>(null);
+
+  const getTurnstileToken = (): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const tw = (window as any).turnstile;
+      if (!tw || !turnstileRef.current) {
+        resolve('');
+        return;
+      }
+      tw.render(turnstileRef.current, {
+        sitekey: '0x4AAAAAADWLcvUInQN9cs5E',
+        callback: (token: string) => {
+          resolve(token);
+          tw.reset(turnstileRef.current);
+        },
+        'error-callback': () => {
+          reject(new Error('Turnstile verification failed'));
+        },
+      });
+    });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setError('');
     try {
+      let turnstileToken = '';
+      try {
+        turnstileToken = await getTurnstileToken();
+      } catch {
+        setError('Human verification failed. Please try again.');
+        setLoading(false);
+        return;
+      }
       const res = await fetch('/api/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({ ...formData, turnstileToken }),
       });
       if (res.ok) setSubmitted(true);
+      else {
+        const data = await res.json();
+        setError(data.error || 'Something went wrong. Please try again.');
+      }
     } catch {
       setSubmitted(true);
     } finally {
@@ -179,12 +214,16 @@ export default function ContactPage() {
               required
               className="w-full px-4 py-3 rounded-xl border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-bitcoin/50 resize-none"
             />
+            <div ref={turnstileRef} className="hidden" />
+            {error && (
+              <p className="text-sm text-red-500 text-center">{error}</p>
+            )}
             <button
               type="submit"
               disabled={loading}
-              className="w-full px-4 py-3 rounded-xl bg-gradient-to-r from-bitcoin to-bitcoin/80 text-black font-semibold hover:opacity-90 transition-all duration-200 shadow-lg shadow-bitcoin/20 disabled:opacity-50"
+              className="w-full px-4 py-3 rounded-xl bg-gradient-to-r from-bitcoin to-bitcoin/80 text-black font-semibold hover:opacity-90 transition-all duration-200 shadow-lg shadow-bitcoin/20 disabled:opacity-50 flex items-center justify-center gap-2"
             >
-              {loading ? 'بھیج رہے ہیں...' : 'پیغام بھیجیں'}
+              {loading ? <><Loader2 className="h-4 w-4 animate-spin" /> بھیج رہے ہیں...</> : 'پیغام بھیجیں'}
             </button>
           </form>
         </div>

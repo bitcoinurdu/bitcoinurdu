@@ -1,16 +1,56 @@
-import { Metadata } from 'next';
-import { generateSEO } from '@/lib/seo';
+'use client';
 
-export const metadata: Metadata = generateSEO({ title: 'Confirmed Airdrops' });
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { CheckCircle } from 'lucide-react';
+import { fetchCmsData } from '@/lib/cms/unified';
 
 export default function ConfirmedAirdropsPage() {
+  const [airdrops, setAirdrops] = useState<Record<string, unknown>[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchCmsData().then((data) => {
+      const all = (data.airdrops as Record<string, unknown>[]) || [];
+      setAirdrops(all.filter((a) => a.status === 'confirmed'));
+      setLoading(false);
+    }).catch(() => setLoading(false));
+  }, []);
+
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Confirmed Airdrops</h1>
-        <p className="text-muted-foreground mt-1">Airdrops that have been officially confirmed.</p>
+    <div className="min-h-screen bg-[#0a0a0f]">
+      <div className="max-w-6xl mx-auto px-4 py-12">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-white mb-2">Confirmed Airdrops</h1>
+          <p className="text-gray-400">Airdrops that have been officially confirmed by the team.</p>
+        </div>
+        {loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">{[1,2,3].map(i => <div key={i} className="h-48 rounded-xl bg-[#12121a] border border-[#1e1e2e] animate-pulse" />)}</div>
+        ) : airdrops.length === 0 ? (
+          <Card className="border-[#1e1e2e] bg-[#12121a]"><CardContent className="p-8 text-center text-gray-400">No confirmed airdrops found.</CardContent></Card>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {airdrops.map((a) => (
+              <Link key={String(a.id)} href={`/airdrops/${a.id}`}>
+                <Card className="border-[#1e1e2e] bg-[#12121a] hover:border-blue-500/30 transition-all cursor-pointer h-full">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="font-bold text-white">{String(a.title)}</h3>
+                      <Badge variant="outline" className="text-blue-400 border-blue-500/30 text-[10px]"><CheckCircle className="h-2 w-2 mr-1" /> CONFIRMED</Badge>
+                    </div>
+                    <p className="text-xs text-gray-400 line-clamp-2 mb-2">{String(a.description)}</p>
+                    {Array.isArray(a.networks) && (
+                      <div className="flex gap-1 flex-wrap">{(a.networks as string[]).map((n) => <Badge key={n} variant="outline" className="text-[10px] border-[#1e1e2e] text-gray-400">{n}</Badge>)}</div>
+                    )}
+                  </CardContent>
+                </Card>
+              </Link>
+            ))}
+          </div>
+        )}
       </div>
-      <p className="text-muted-foreground">View confirmed airdrops on the main airdrops page.</p>
     </div>
   );
 }

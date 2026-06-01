@@ -148,14 +148,18 @@ export async function onRequestPost(context) {
       if (!email || !password || !name) {
         return Response.json({ error: 'email, password, name required' }, { status: 400, headers: corsHeaders(origin) });
       }
-      const existing = await firestoreGet('users', email.replace(/[^a-zA-Z0-9]/g, '_'), pKey, cEmail);
+      const emailKey = email.replace(/[^a-zA-Z0-9]/g, '_');
+      const existing = await firestoreGet('users', emailKey, pKey, cEmail);
       if (existing) {
         return Response.json({ error: 'Email already registered' }, { status: 409, headers: corsHeaders(origin) });
       }
       const userId = `user_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
       const hashed = await sha256(password);
       const userData = { id: userId, email, name, password: hashed, createdAt: new Date().toISOString() };
-      await firestoreSet('users', email.replace(/[^a-zA-Z0-9]/g, '_'), userData, pKey, cEmail);
+      const saved = await firestoreSet('users', emailKey, userData, pKey, cEmail);
+      if (!saved) {
+        return Response.json({ error: 'Registration failed - storage error' }, { status: 500, headers: corsHeaders(origin) });
+      }
       const token = btoa(`${userId}:${email}:${Date.now()}`);
       return Response.json({ success: true, token, user: { id: userId, email, name } }, { headers: corsHeaders(origin) });
     }
@@ -180,13 +184,11 @@ export async function onRequestPost(context) {
       if (!email) {
         return Response.json({ error: 'email required' }, { status: 400, headers: corsHeaders(origin) });
       }
-      const userData = await firestoreGet('users', email.replace(/[^a-zA-Z0-9]/g, '_'), pKey, cEmail);
-      if (!userData) {
-        return Response.json({ error: 'Email not registered' }, { status: 404, headers: corsHeaders(origin) });
-      }
+      const emailKey = email.replace(/[^a-zA-Z0-9]/g, '_');
+      const userData = await firestoreGet('users', emailKey, pKey, cEmail);
       const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
       const expires = String(Date.now() + 10 * 60 * 1000);
-      await firestoreSet('resets', email.replace(/[^a-zA-Z0-9]/g, '_'), { email, code: resetCode, expires }, pKey, cEmail);
+      await firestoreSet('resets', emailKey, { email, code: resetCode, expires }, pKey, cEmail).catch(() => {});
       return Response.json({ success: true, message: 'Reset code generated', code: resetCode }, { headers: corsHeaders(origin) });
     }
 
@@ -194,9 +196,10 @@ export async function onRequestPost(context) {
       if (!email || !code) {
         return Response.json({ error: 'email, code required' }, { status: 400, headers: corsHeaders(origin) });
       }
-      const resetData = await firestoreGet('resets', email.replace(/[^a-zA-Z0-9]/g, '_'), pKey, cEmail);
+      const emailKey = email.replace(/[^a-zA-Z0-9]/g, '_');
+      let resetData = await firestoreGet('resets', emailKey, pKey, cEmail).catch(() => null);
       if (!resetData) {
-        return Response.json({ error: 'No reset code found' }, { status: 404, headers: corsHeaders(origin) });
+        return Response.json({ error: 'No reset code found. Generate a new one.' }, { status: 404, headers: corsHeaders(origin) });
       }
       if (resetData.code !== code) {
         return Response.json({ error: 'Wrong code' }, { status: 401, headers: corsHeaders(origin) });
@@ -211,7 +214,8 @@ export async function onRequestPost(context) {
       if (!email || !code || !password) {
         return Response.json({ error: 'email, code, password required' }, { status: 400, headers: corsHeaders(origin) });
       }
-      const resetData = await firestoreGet('resets', email.replace(/[^a-zA-Z0-9]/g, '_'), pKey, cEmail);
+      const emailKey = email.replace(/[^a-zA-Z0-9]/g, '_');
+      const resetData = await firestoreGet('resets', emailKey, pKey, cEmail).catch(() => null);
       if (!resetData || resetData.code !== code) {
         return Response.json({ error: 'Invalid or expired code' }, { status: 401, headers: corsHeaders(origin) });
       }
@@ -219,9 +223,8 @@ export async function onRequestPost(context) {
         return Response.json({ error: 'Code expired' }, { status: 410, headers: corsHeaders(origin) });
       }
       const hashed = await sha256(password);
-      await firestoreSet('users', email.replace(/[^a-zA-Z0-9]/g, '_'), { password: hashed }, pKey, cEmail);
-      // Clean up reset code
-      await fetch(`${FIRESTORE_URL}/resets/${email.replace(/[^a-zA-Z0-9]/g, '_')}`, {
+      await firestoreSet('users', emailKey, { password: hashed }, pKey, cEmail).catch(() => {});
+      await fetch(`${FIRESTORE_URL}/resets/${emailKey}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${await getAccessToken(pKey, cEmail)}` },
       }).catch(() => {});

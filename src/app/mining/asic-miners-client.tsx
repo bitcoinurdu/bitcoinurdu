@@ -33,6 +33,26 @@ const COINGECKO_IDS: Record<string, string> = {
   ZEC: 'zcash', ETC: 'ethereum-classic', KAS: 'kaspa', CKB: 'nervos-network',
   XMR: 'monero', SC: 'siacoin', ALPH: 'alephium', ALEO: 'aleo', XTM: 'torrent',
   GRIN: 'grin', KDA: 'kadena', ZEN: 'horizen', RXD: 'radiant', NEXA: 'nexa',
+  INI: 'ini-crypto', CCR: 'conflux-network',
+};
+
+const COIN_NETWORK: Record<string, { networkHPS: number; blockTimeSec: number; blockReward: number }> = {
+  BTC: { networkHPS: 750e18, blockTimeSec: 600, blockReward: 3.125 },
+  KAS: { networkHPS: 850e18, blockTimeSec: 1, blockReward: 56.94 },
+  ZEC: { networkHPS: 16.4e15, blockTimeSec: 75, blockReward: 1.25 },
+  ALPH: { networkHPS: 3.5e15, blockTimeSec: 120, blockReward: 0.625 },
+  ALEO: { networkHPS: 200e12, blockTimeSec: 10, blockReward: 23.5 },
+  ETC: { networkHPS: 3e15, blockTimeSec: 13, blockReward: 2.56 },
+  LTC: { networkHPS: 800e12, blockTimeSec: 150, blockReward: 6.25 },
+  DOGE: { networkHPS: 900e12, blockTimeSec: 60, blockReward: 10000 },
+  KDA: { networkHPS: 500e15, blockTimeSec: 1, blockReward: 0.53 },
+  ZEN: { networkHPS: 5e9, blockTimeSec: 150, blockReward: 2.5 },
+  RXD: { networkHPS: 10e12, blockTimeSec: 60, blockReward: 375 },
+  NEXA: { networkHPS: 50e12, blockTimeSec: 10, blockReward: 10000 },
+  SC: { networkHPS: 800e15, blockTimeSec: 10, blockReward: 31250 },
+  CKB: { networkHPS: 300e12, blockTimeSec: 17, blockReward: 431 },
+  INI: { networkHPS: 500e6, blockTimeSec: 60, blockReward: 10 },
+  CCR: { networkHPS: 100e12, blockTimeSec: 10, blockReward: 100 },
 };
 
 function getManufacturer(name: string): string {
@@ -61,7 +81,21 @@ function formatHashrate(v: number, unit: string): string {
   if (gh >= 1) return `${gh.toFixed(1)} GH/s`;
   const mh = (v * mult) / 1e6;
   if (mh >= 1) return `${mh.toFixed(1)} MH/s`;
+  const kh = (v * mult) / 1e3;
+  if (kh >= 1) return `${kh.toFixed(1)} kH/s`;
   return `${v} ${unit}H/s`;
+}
+
+function formatEfficiency(power: number, hPerSec: number): { value: number; unit: string } {
+  if (hPerSec <= 0) return { value: 0, unit: 'J/TH' };
+  const th = hPerSec / 1e12;
+  if (th >= 1) return { value: power / th, unit: 'J/TH' };
+  const gh = hPerSec / 1e9;
+  if (gh >= 1) return { value: power / gh, unit: 'J/GH' };
+  const mh = hPerSec / 1e6;
+  if (mh >= 1) return { value: power / mh, unit: 'J/MH' };
+  const kh = hPerSec / 1e3;
+  return { value: power / kh, unit: 'J/kH' };
 }
 
 function fixImageUrl(url: string): string {
@@ -84,7 +118,13 @@ export function AsicMinersClient() {
   const [elecCost, setElecCost] = useState(0.06);
   const [sortBy, setSortBy] = useState<'profit' | 'hashrate' | 'efficiency' | 'price'>('profit');
   const [search, setSearch] = useState('');
+  const [brandFilter, setBrandFilter] = useState('');
+  const [algoFilter, setAlgoFilter] = useState('');
+  const [coinFilter, setCoinFilter] = useState('');
   const [coinPrices, setCoinPrices] = useState<Record<string, number>>({});
+  const [networkTh, setNetworkTh] = useState(0);
+  const [btcDiff, setBtcDiff] = useState(92300000000000);
+  const [btcBlockReward, setBtcBlockReward] = useState(3.125);
   const [time, setTime] = useState(Date.now());
 
   const fetchAll = useCallback(async () => {
@@ -108,6 +148,26 @@ export function AsicMinersClient() {
         }
         setCoinPrices(mapped);
       }
+
+      fetch('https://mempool.space/api/v1/mining/hashrate/1d')
+        .then(r => r.ok ? r.json() : null)
+        .then(d => { if (d?.currentHashrate) setNetworkTh(d.currentHashrate / 1e12); })
+        .catch(() => {});
+
+      fetch('https://mempool.space/api/v1/difficulty/adjustment')
+        .then(r => r.ok ? r.json() : null)
+        .then(d => { if (d?.difficulty) setBtcDiff(d.difficulty); })
+        .catch(() => {});
+
+      fetch('https://mempool.space/api/blocks/tip/height')
+        .then(r => r.ok ? r.json() : null)
+        .then(h => {
+          if (h) {
+            const era = Math.floor(h / 210000);
+            setBtcBlockReward(50 / Math.pow(2, era));
+          }
+        })
+        .catch(() => {});
     } catch (e) {
       console.error(e);
     } finally {
@@ -126,6 +186,23 @@ export function AsicMinersClient() {
 
   const btcPrice = coinPrices['bitcoin'] || 0;
 
+  const filterOptions = useMemo(() => {
+    const brands = new Set<string>();
+    const algos = new Set<string>();
+    const coins = new Set<string>();
+    for (const p of products) {
+      const m = getManufacturer(p.name);
+      if (m && m !== 'Unknown') brands.add(m);
+      if (p.algorithm && String(p.algorithm).trim()) algos.add(String(p.algorithm));
+      if (p.coin_name && String(p.coin_name).trim()) coins.add(String(p.coin_name));
+    }
+    return {
+      brands: Array.from(brands).sort(),
+      algos: Array.from(algos).sort(),
+      coins: Array.from(coins).sort(),
+    };
+  }, [products]);
+
   const enriched = useMemo(() => {
     return products
       .filter((p) => {
@@ -142,30 +219,37 @@ export function AsicMinersClient() {
         const cgPrice = coinPrices[coinId] || 0;
 
         const coin = p.coins?.[0];
+        const rawCoinPrice = toNum(p.coin_price);
         let coinPrice = 0;
         if (coin && coin.price > 0) coinPrice = coin.price;
-        else coinPrice = toNum(p.coin_price) || cgPrice || btcPrice;
+        else if (rawCoinPrice > 0) coinPrice = rawCoinPrice;
+        else coinPrice = cgPrice || btcPrice || 0;
 
         const unitMult = UNIT_MULTIPLIER[p.unit.toUpperCase()] || 1;
         const hashratePerSec = hashrate * unitMult;
 
         let grossUsd = 0;
+        const isSHA256 = p.algorithm === 'SHA-256' || String(p.algorithm).toUpperCase() === 'SHA-256';
 
-        if (coin && coin.reward_block > 0 && coin.difficulty > 0) {
+        const apiNetHash = toNum((coin as any)?.network_hashrate || (p as any).network_hashrate) || 0;
+        const apiBlockTime = toNum((coin as any)?.block_time || (p as any).block_time || (p as any).blocktime) || 0;
+        const apiBlockReward = toNum(coin?.reward_block || p.blockreward) || 0;
+
+        if (isSHA256 && apiNetHash <= 0) {
+          const diff = btcDiff > 0 ? btcDiff : 92300000000000;
+          const reward = btcBlockReward > 0 ? btcBlockReward : 3.125;
+          const price = btcPrice || coinPrice;
           const sharesPerDay = hashratePerSec * 86400;
-          const blocksPerDay = sharesPerDay / (coin.difficulty * 4294967296);
-          grossUsd = blocksPerDay * coin.reward_block * coinPrice;
+          const blocksPerDay = sharesPerDay / (diff * 4294967296);
+          grossUsd = blocksPerDay * reward * price;
         } else {
-          const diff = toNum(p.difficulty);
-          const rew = toNum(p.blockreward);
-          if (diff > 0 && rew > 0) {
-            const sharesPerDay = hashratePerSec * 86400;
-            const blocksPerDay = sharesPerDay / (diff * 4294967296);
-            grossUsd = blocksPerDay * rew * coinPrice;
-          } else if (coinName === 'BTC' || coinId === 'bitcoin') {
-            const sharesPerDay = hashratePerSec * 86400;
-            const blocksPerDay = sharesPerDay / (92300000000000 * 4294967296);
-            grossUsd = blocksPerDay * 3.125 * coinPrice;
+          const networkHPS = apiNetHash > 0 ? apiNetHash : (COIN_NETWORK[coinName]?.networkHPS || 1e12);
+          const blockSec = apiBlockTime > 0 ? apiBlockTime : (COIN_NETWORK[coinName]?.blockTimeSec || 60);
+          const blockRwd = apiBlockReward > 0 ? apiBlockReward : (COIN_NETWORK[coinName]?.blockReward || 1);
+          if (networkHPS > 0 && blockSec > 0 && blockRwd > 0) {
+            const minerShare = hashratePerSec / networkHPS;
+            const blocksPerDay = 86400 / blockSec;
+            grossUsd = minerShare * blocksPerDay * blockRwd * coinPrice;
           }
         }
 
@@ -173,16 +257,27 @@ export function AsicMinersClient() {
         const netUsd = grossUsd - powerCost;
         const paybackDays = netUsd > 0 && price > 0 ? price / netUsd : 99999;
         const roi = price > 0 ? (netUsd * 365 / price) * 100 : 0;
-        const efficiency = hashratePerSec > 0 ? power / (hashratePerSec / 1e12) : 0;
+        const eff = formatEfficiency(power, hashratePerSec);
+        const efficiency = eff.value;
+        const efficiencyUnit = eff.unit;
         const manufacturer = getManufacturer(p.name);
 
-        return { ...p, hashrate, power, price, coinPrice, grossUsd, netUsd, powerCost, paybackDays, roi, efficiency, manufacturer, hashratePerSec, unitMult };
+        return { ...p, hashrate, power, price, coinPrice, grossUsd, netUsd, powerCost, paybackDays, roi, efficiency, efficiencyUnit, manufacturer, hashratePerSec, unitMult };
       })
-      .filter((p) => p.coinPrice > 0 || p.coin_name === 'BTC' || p.algorithm === 'SHA-256');
+      .filter((p) => p.hashrate > 0 && p.power > 0);
   }, [products, coinPrices, btcPrice, elecCost, time]);
 
   const filtered = useMemo(() => {
     let list = enriched;
+    if (brandFilter) {
+      list = list.filter((p) => p.manufacturer.toLowerCase() === brandFilter.toLowerCase());
+    }
+    if (algoFilter) {
+      list = list.filter((p) => String(p.algorithm || '').toLowerCase() === algoFilter.toLowerCase());
+    }
+    if (coinFilter) {
+      list = list.filter((p) => String(p.coin_name || '').toLowerCase() === coinFilter.toLowerCase());
+    }
     if (search) {
       const q = search.toLowerCase();
       list = list.filter((p) =>
@@ -201,7 +296,7 @@ export function AsicMinersClient() {
         default: return 0;
       }
     });
-  }, [enriched, search, sortBy]);
+  }, [enriched, search, sortBy, brandFilter, algoFilter, coinFilter]);
 
   const totalTh = filtered.reduce((s, p) => s + p.hashratePerSec / 1e12, 0);
   const profitableCount = filtered.filter(p => p.netUsd > 0).length;
@@ -216,7 +311,7 @@ export function AsicMinersClient() {
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-white">ASIC Miners</h1>
           <p className="text-sm text-gray-400 mt-1">
-            Live profitability &bull; BTC: ${btcPrice.toLocaleString()} &bull; {totalTh > 0 ? `${formatCompact(totalTh)} TH/s tracked` : 'Loading network...'}
+            Live profitability &bull; BTC: ${btcPrice.toLocaleString()} &bull; {networkTh > 0 ? `${formatCompact(networkTh)} TH/s network` : 'Loading network...'}
           </p>
         </div>
         {loading && <RefreshCw className="h-4 w-4 animate-spin text-gray-500" />}
@@ -271,15 +366,59 @@ export function AsicMinersClient() {
           </div>
           <div className="rounded-xl bg-[#12121a] border border-[#1e1e2e] p-3">
             <p className="text-xs text-gray-500">Network Hashrate</p>
-            <p className="text-lg font-bold text-white">{totalTh > 0 ? `${formatCompact(totalTh)} TH/s` : '\u2014'}</p>
+            <p className="text-lg font-bold text-white">{networkTh > 0 ? `${formatCompact(networkTh)} TH/s` : '\u2014'}</p>
           </div>
           <div className="rounded-xl bg-[#12121a] border border-[#1e1e2e] p-3">
             <p className="text-xs text-gray-500">$/TH/s per day</p>
-            <p className="text-lg font-bold text-white">${avgThPerDay > 0 ? avgThPerDay.toFixed(4) : '\u2014'}</p>
+            <p className="text-lg font-bold text-white">${btcPrice > 0 && networkTh > 0 ? ((btcPrice * 3.125 * 144) / networkTh).toFixed(4) : '\u2014'}</p>
           </div>
           <div className="rounded-xl bg-[#12121a] border border-[#1e1e2e] p-3">
             <p className="text-xs text-gray-500">Profitable Miners</p>
             <p className="text-lg font-bold text-green-400">{profitableCount}/{filtered.length}</p>
+          </div>
+        </div>
+      )}
+
+      {!loading && (
+        <div className="space-y-3 mb-4">
+          <div>
+            <div className="text-xs font-medium text-gray-400 mb-2">Brand:</div>
+            <div className="flex flex-wrap gap-1.5">
+              <button onClick={() => setBrandFilter('')}
+                className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${!brandFilter ? 'bg-orange-500/20 text-orange-300 border border-orange-500/30' : 'bg-[#1e1e2e] text-gray-400 hover:bg-[#2a2a3e] border border-[#2a2a3e]'}`}
+              >All</button>
+              {filterOptions.brands.slice(0, 20).map((b) => (
+                <button key={b} onClick={() => setBrandFilter(brandFilter === b ? '' : b)}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${brandFilter === b ? 'bg-orange-500/20 text-orange-300 border border-orange-500/30' : 'bg-[#1e1e2e] text-gray-400 hover:bg-[#2a2a3e] border border-[#2a2a3e]'}`}
+                >{b}</button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <div className="text-xs font-medium text-gray-400 mb-2">Algorithms:</div>
+            <div className="flex flex-wrap gap-1.5">
+              <button onClick={() => setAlgoFilter('')}
+                className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${!algoFilter ? 'bg-orange-500/20 text-orange-300 border border-orange-500/30' : 'bg-[#1e1e2e] text-gray-400 hover:bg-[#2a2a3e] border border-[#2a2a3e]'}`}
+              >All</button>
+              {filterOptions.algos.map((a) => (
+                <button key={a} onClick={() => setAlgoFilter(algoFilter === a ? '' : a)}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${algoFilter === a ? 'bg-orange-500/20 text-orange-300 border border-orange-500/30' : 'bg-[#1e1e2e] text-gray-400 hover:bg-[#2a2a3e] border border-[#2a2a3e]'}`}
+                >{a}</button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <div className="text-xs font-medium text-gray-400 mb-2">Crypto currencies:</div>
+            <div className="flex flex-wrap gap-1.5">
+              <button onClick={() => setCoinFilter('')}
+                className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${!coinFilter ? 'bg-orange-500/20 text-orange-300 border border-orange-500/30' : 'bg-[#1e1e2e] text-gray-400 hover:bg-[#2a2a3e] border border-[#2a2a3e]'}`}
+              >All</button>
+              {filterOptions.coins.map((c) => (
+                <button key={c} onClick={() => setCoinFilter(coinFilter === c ? '' : c)}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-medium transition-colors ${coinFilter === c ? 'bg-orange-500/20 text-orange-300 border border-orange-500/30' : 'bg-[#1e1e2e] text-gray-400 hover:bg-[#2a2a3e] border border-[#2a2a3e]'}`}
+                >{c}</button>
+              ))}
+            </div>
           </div>
         </div>
       )}
@@ -301,7 +440,7 @@ export function AsicMinersClient() {
       ) : (
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {filtered.slice(0, 50).map((p) => {
+            {filtered.map((p) => {
               const imgSrc = fixImageUrl(p.image_url);
               return (
                 <div key={p.id} className="rounded-xl bg-[#12121a] border border-[#1e1e2e] p-4 hover:border-orange-500/30 transition-all group">
@@ -329,7 +468,7 @@ export function AsicMinersClient() {
                     </div>
                     <div className="bg-[#0d0d14] rounded-lg p-2">
                       <span className="text-gray-500 block">Efficiency</span>
-                      <span className="text-white font-semibold">{p.efficiency.toFixed(1)} J/TH</span>
+                      <span className="text-white font-semibold">{(p as any).efficiencyUnit ? `${p.efficiency.toFixed(1)} ${(p as any).efficiencyUnit}` : `${p.efficiency.toFixed(1)} J/TH`}</span>
                     </div>
                   </div>
 

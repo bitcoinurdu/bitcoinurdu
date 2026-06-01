@@ -49,7 +49,8 @@ export function calcMiningProfit(
   coinPriceUsd: number,
   networkDifficulty: number,
   blockReward: number,
-  elecRate: number
+  elecRate: number,
+  hardwareCost?: number
 ): MiningProfitCalc {
   const hashrateTh = normalizeToTH(s(hashrate, hashrateUnit));
   const earningsBtc = (hashrateTh * 86400 * blockReward) / (networkDifficulty * 2 ** 32);
@@ -57,7 +58,7 @@ export function calcMiningProfit(
   const powerCostUsd = (powerWatts / 1000) * 24 * elecRate;
   const netDailyUsd = earningsUsd - powerCostUsd;
   const netMonthlyUsd = netDailyUsd * 30;
-  const paybackDays = netDailyUsd > 0 ? Math.ceil(coinPriceUsd / netDailyUsd) : 9999;
+  const paybackDays = netDailyUsd > 0.01 && hardwareCost && hardwareCost > 0 ? Math.ceil(hardwareCost / netDailyUsd) : 9999;
 
   return { coinPrice: coinPriceUsd, earningsBtc, earningsUsd, powerCostUsd, netDailyUsd, netMonthlyUsd, paybackDays };
 }

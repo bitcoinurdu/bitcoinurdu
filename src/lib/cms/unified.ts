@@ -88,6 +88,16 @@ export async function updateCmsData(updates: Partial<CmsData>): Promise<CmsData>
     if (!res.ok) throw new Error('CMS update failed');
 
     const current = await fetchCmsData();
+
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(CMS_CACHE_KEY);
+      window.dispatchEvent(new CustomEvent('bu_settings_updated', { detail: current }));
+      window.dispatchEvent(new CustomEvent('bu:admin:update'));
+      try {
+        localStorage.setItem('bu_admin_sync', Date.now().toString());
+      } catch {}
+    }
+
     return { ...current, ...updates };
   } catch {
     return DEFAULT_CMS_DATA;

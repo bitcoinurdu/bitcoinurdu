@@ -32,6 +32,23 @@ async function getUSDCoins() {
   }
 }
 
+async function getAllCoinsFromLocal() {
+  try {
+    const { promises: fs } = await import('fs');
+    const { join } = await import('path');
+    const data = JSON.parse(await fs.readFile(join(process.cwd(), 'public', 'data', 'coins-market.json'), 'utf-8'));
+    const allCoins: Record<string, unknown>[] = [];
+    for (const page of data.pages || []) {
+      for (const coin of page.coins || []) {
+        allCoins.push(coin);
+      }
+    }
+    return allCoins.sort((a, b) => ((b.market_cap as number) || 0) - ((a.market_cap as number) || 0));
+  } catch {
+    return null;
+  }
+}
+
 async function getTrendingCoins() {
   try {
     const res = await fetch('https://api.coingecko.com/api/v3/search/trending', {
@@ -57,12 +74,18 @@ async function getFearGreedIndex() {
 }
 
 export default async function HomePage() {
-  const [globalData, usdCoins, trendingData, fearGreedData] = await Promise.all([
+  const [globalData, usdCoins, trendingData, fearGreedData, localAllCoins] = await Promise.all([
     getGlobalData(),
     getUSDCoins(),
     getTrendingCoins(),
     getFearGreedIndex(),
+    getAllCoinsFromLocal(),
   ]);
+
+  const allCoinsWithUSD = (localAllCoins || (usdCoins || [])).map((c: Record<string, unknown>) => ({
+    ...c,
+    usd_price: (c.current_price as number) || 0,
+  }));
 
   const coinsWithUSD = (usdCoins || []).map((c: Record<string, unknown>) => ({
     ...c,
@@ -74,7 +97,7 @@ export default async function HomePage() {
   return (
     <HomePageClient
       globalData={globalData}
-      coins={coinsWithUSD}
+      coins={allCoinsWithUSD.length > 0 ? allCoinsWithUSD : coinsWithUSD}
       trendingData={trendingData}
       fearGreedData={fearGreedData}
       tickerCoins={tickerCoins}

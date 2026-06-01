@@ -20,8 +20,9 @@ export function CloudflareTurnstile({ siteKey, onVerify, onError }: TurnstilePro
     script.defer = true;
     script.onload = () => {
       setLoading(false);
-      if (window.turnstile && containerRef.current) {
-        window.turnstile.render(containerRef.current, {
+      const ts = (window as any).turnstile;
+      if (ts && containerRef.current) {
+        ts.render(containerRef.current, {
           sitekey: siteKey,
           theme: 'dark',
           size: 'invisible',
@@ -62,12 +63,4 @@ export function CloudflareTurnstile({ siteKey, onVerify, onError }: TurnstilePro
   );
 }
 
-declare global {
-  interface Window {
-    turnstile: {
-      render: (container: HTMLElement, config: Record<string, unknown>) => void;
-      reset: (container: HTMLElement) => void;
-      remove: (container: HTMLElement) => void;
-    };
-  }
-}
+

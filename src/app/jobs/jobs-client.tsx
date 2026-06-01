@@ -338,7 +338,7 @@ const defaultJobs: Job[] = [
   },
 ];
 
-export default function JobsClient() {
+export default function JobsClient({ defaultFilter }: { defaultFilter?: string }) {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -349,6 +349,7 @@ export default function JobsClient() {
   const [currentPage, setCurrentPage] = useState(1);
   const [emailAlert, setEmailAlert] = useState('');
   const [subscribed, setSubscribed] = useState(false);
+  const [filter, setFilter] = useState(defaultFilter || 'all');
   const perPage = 6;
 
   useEffect(() => {
@@ -357,7 +358,15 @@ export default function JobsClient() {
   }, []);
 
   let filtered = jobs.filter((job) => {
-    if (job.active === false) return false;
+    if (filter === 'ended') {
+      if (job.active !== false) return false;
+    } else if (filter === 'new') {
+      if (!job.new) return false;
+    } else if (filter === 'upcoming') {
+      if (job.active !== false) return false;
+    } else if (job.active === false) {
+      return false;
+    }
     const matchSearch =
       job.title.toLowerCase().includes(search.toLowerCase()) ||
       job.department.toLowerCase().includes(search.toLowerCase()) ||
@@ -416,6 +425,27 @@ export default function JobsClient() {
       </div>
 
       <JobsAd className="my-4" />
+
+      {/* FILTER TABS */}
+      <div className="flex flex-wrap gap-2 justify-center">
+        {[
+          { key: 'all', label: 'All Jobs' },
+          { key: 'new', label: 'New Jobs' },
+          { key: 'ended', label: 'Ended' },
+          { key: 'upcoming', label: 'Upcoming' },
+        ].map((tab) => (
+          <button
+            key={tab.key}
+            onClick={() => { setFilter(tab.key); setCurrentPage(1); }}
+            className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+              filter === tab.key ? 'bg-bitcoin text-white' : 'bg-accent text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            {tab.label}
+            {tab.key === 'new' && <span className="ml-1.5 text-xs opacity-70">{jobs.filter(j => j.new).length}</span>}
+          </button>
+        ))}
+      </div>
 
       {/* SEARCH & STATS */}
       <div className="space-y-3 py-2">
@@ -557,7 +587,7 @@ export default function JobsClient() {
                         <div className="flex items-start gap-2">
                           <div className="flex-1">
                             <div className="flex items-center gap-2 flex-wrap">
-                              <h3 className="text-sm font-bold">{job.title}</h3>
+                              <Link href={`/jobs/${job.id}`}><h3 className="text-sm font-bold hover:text-bitcoin transition-colors">{job.title}</h3></Link>
                               {job.hot && <Badge variant="red" className="text-[10px] px-1.5 py-0">HOT</Badge>}
                               {job.new && <Badge variant="green" className="text-[10px] px-1.5 py-0">NEW</Badge>}
                               {job.urgent && <Badge variant="bitcoin" className="text-[10px] px-1.5 py-0">URGENT</Badge>}

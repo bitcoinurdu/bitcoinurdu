@@ -12,48 +12,48 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
+    --background: 240 15% 6%;
+    --foreground: 210 40% 98%;
+    --card: 240 12% 12%;
+    --card-foreground: 210 40% 98%;
+    --popover: 240 12% 12%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 210 40% 98%;
+    --primary-foreground: 240 15% 6%;
+    --secondary: 240 10% 16%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 240 10% 16%;
+    --muted-foreground: 215 20% 65%;
+    --accent: 240 10% 16%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62% 30%;
     --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
-    --radius: 0.5rem;
+    --border: 240 10% 20%;
+    --input: 240 10% 20%;
+    --ring: 212 27% 84%;
+    --radius: 0.75rem;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
+    --background: 240 15% 6%;
     --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
+    --card: 240 12% 12%;
     --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
+    --popover: 240 12% 12%;
     --popover-foreground: 210 40% 98%;
     --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
+    --primary-foreground: 240 15% 6%;
+    --secondary: 240 10% 16%;
     --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
+    --muted: 240 10% 16%;
+    --muted-foreground: 215 20% 65%;
+    --accent: 240 10% 16%;
     --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
+    --destructive: 0 62% 30%;
     --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    --border: 240 10% 20%;
+    --input: 240 10% 20%;
+    --ring: 212 27% 84%;
   }
 }
 
@@ -64,6 +64,49 @@
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
+    background-image: radial-gradient(ellipse 80% 60% at 50% -20%, rgba(247, 147, 26, 0.06), transparent), radial-gradient(ellipse 60% 50% at 80% 80%, rgba(123, 97, 255, 0.04), transparent), radial-gradient(ellipse 50% 40% at 20% 90%, rgba(14, 203, 129, 0.03), transparent);
+    background-attachment: fixed;
+  }
+
+  /* Glass card style */
+  .glass-card {
+    background: hsl(var(--card) / 0.6);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid hsl(var(--border) / 0.4);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  }
+
+  .glass-card:hover {
+    background: hsl(var(--card) / 0.7);
+    border-color: hsl(var(--border) / 0.6);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  }
+
+  /* Glass navbar */
+  .glass-nav {
+    background: hsl(240 15% 6% / 0.7);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid hsl(var(--border) / 0.3);
+  }
+
+  /* Glass sidebar / dropdown */
+  .glass-dropdown {
+    background: hsl(var(--card) / 0.85);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid hsl(var(--border) / 0.3);
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.3);
+  }
+
+  /* Glass modal / dialog */
+  .glass-dialog {
+    background: hsl(var(--card) / 0.85);
+    backdrop-filter: blur(32px);
+    -webkit-backdrop-filter: blur(32px);
+    border: 1px solid hsl(var(--border) / 0.2);
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.4);
   }
 }
 
@@ -73,23 +116,24 @@
   }
 
   .card {
-    @apply rounded-xl border bg-card p-4 shadow-sm transition-all hover:shadow-md;
+    @apply rounded-xl border bg-background/60 backdrop-blur-md p-4 shadow-lg shadow-black/5 transition-all duration-300;
+    border-color: hsl(var(--border) / 0.3);
   }
 
   .card-hover {
-    @apply transition-all duration-200 hover:scale-[1.02] hover:shadow-lg;
+    @apply transition-all duration-300 hover:scale-[1.01] hover:shadow-xl hover:shadow-black/10 hover:border-white/10;
   }
 
   .btn {
-    @apply inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50;
+    @apply inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50;
   }
 
   .btn-primary {
-    @apply bg-primary text-primary-foreground hover:bg-primary/90;
+    @apply bg-bitcoin text-white hover:bg-bitcoin-dark shadow-lg shadow-bitcoin/20;
   }
 
   .btn-secondary {
-    @apply bg-secondary text-secondary-foreground hover:bg-secondary/80;
+    @apply bg-secondary/80 backdrop-blur-sm text-secondary-foreground hover:bg-secondary;
   }
 
   .btn-bitcoin {
@@ -97,7 +141,7 @@
   }
 
   .input {
-    @apply flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50;
+    @apply flex h-10 w-full rounded-lg border bg-background/40 backdrop-blur-sm px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50;
   }
 
   .badge {
@@ -105,15 +149,15 @@
   }
 
   .badge-green {
-    @apply bg-crypto-green/10 text-crypto-green;
+    @apply bg-crypto-green/15 text-crypto-green;
   }
 
   .badge-red {
-    @apply bg-crypto-red/10 text-crypto-red;
+    @apply bg-crypto-red/15 text-crypto-red;
   }
 
   .badge-bitcoin {
-    @apply bg-bitcoin/10 text-bitcoin;
+    @apply bg-bitcoin/15 text-bitcoin;
   }
 
   .shimmer {
@@ -129,7 +173,7 @@
   }
 
   .table-header {
-    @apply sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60;
+    @apply sticky top-0 z-10 bg-background/80 backdrop-blur-md;
   }
 }
 
@@ -139,7 +183,6 @@
     scrollbar-color: hsl(var(--muted)) transparent;
   }
 
-  /* Urdu/Pashto/Sindhi text with Jameel Noori Nastaleeq */
   html[data-lang="ur"] body,
   html[data-lang="ps"] body,
   html[data-lang="sd"] body {

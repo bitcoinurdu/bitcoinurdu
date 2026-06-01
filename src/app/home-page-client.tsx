@@ -84,11 +84,17 @@ export default function HomePageClient({
   useEffect(() => {
     const fetchCoins = async () => {
       try {
-        const res = await fetch('/api/coins?per_page=250&order=asc');
+        const res = await fetch('/data/coins-market.json');
         if (res.ok) {
           const data = await res.json();
-          if (data.coins && data.coins.length > 0) {
-            const sorted = (data.coins as unknown as (Record<string, unknown> & { usd_price: number })[])
+          if (data.pages && data.pages.length > 0) {
+            const allCoins: (Record<string, unknown> & { usd_price: number })[] = [];
+            for (const page of data.pages) {
+              for (const coin of page.coins || []) {
+                allCoins.push({ ...coin, usd_price: coin.current_price as number });
+              }
+            }
+            const sorted = allCoins
               .filter(c => (c.market_cap as number) > 0)
               .sort((a, b) => ((b.market_cap as number) || 0) - ((a.market_cap as number) || 0));
             if (sorted.length > 0) {

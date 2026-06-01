@@ -30,7 +30,15 @@ export function useSiteSettings() {
       setSettings(s);
     });
 
-    return cleanup;
+    const adminSyncHandler = () => {
+      fetchSettings().then(setSettings).catch(() => {});
+    };
+    window.addEventListener('bu:admin:update', adminSyncHandler);
+
+    return () => {
+      cleanup();
+      window.removeEventListener('bu:admin:update', adminSyncHandler);
+    };
   }, []);
 
   const updateSingle = useCallback(async (key: string, value: unknown) => {

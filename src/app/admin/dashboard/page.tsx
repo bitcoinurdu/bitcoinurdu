@@ -8,7 +8,7 @@ import { loadLocalPortfolio, syncLocalToCloud, saveLocalPortfolio } from '@/lib/
 import { savePortfolioToCloud, loadPortfolioFromCloud } from '@/lib/auth/cloud';
 import { useAppStore } from '@/stores';
 import { useSiteSettings } from '@/hooks/use-site-settings';
-import { DEFAULT_SETTINGS } from '@/lib/settings';
+import { DEFAULT_SETTINGS, updateSettings } from '@/lib/settings';
 import {
   Shield,
   LayoutDashboard,
@@ -97,9 +97,12 @@ interface Announcement {
 interface AdSlot {
   id: string;
   name: string;
+  page: string;
   position: string;
+  size: string;
   code: string;
   enabled: boolean;
+  priority: number;
 }
 
 interface AffiliateLink {
@@ -270,6 +273,12 @@ export default function AdminDashboard() {
     setNotification({ type, message });
   };
 
+  const syncToAPI = useCallback(async (key: string, value: unknown) => {
+    try {
+      await updateSettings({ [key]: typeof value === 'string' ? value : JSON.stringify(value) });
+    } catch {}
+  }, []);
+
   const loadPriceOverrides = () => {
     try {
       const raw = localStorage.getItem('bu_admin_price_overrides');
@@ -282,6 +291,7 @@ export default function AdminDashboard() {
   const savePriceOverrides = (overrides: PriceOverride[]) => {
     setPriceOverrides(overrides);
     localStorage.setItem('bu_admin_price_overrides', JSON.stringify(overrides));
+    syncToAPI('price_overrides', overrides.reduce((acc, o) => ({ ...acc, [o.coin_id]: { price: o.override_price, locked: o.locked } }), {}));
     showNotification('success', 'Price override saved');
   };
 
@@ -297,6 +307,7 @@ export default function AdminDashboard() {
   const saveCourses = (updated: Course[]) => {
     setCourses(updated);
     localStorage.setItem('bu_admin_courses', JSON.stringify(updated));
+    syncToAPI('courses', updated);
     showNotification('success', 'Course saved');
   };
 
@@ -312,6 +323,7 @@ export default function AdminDashboard() {
   const saveAnnouncements = (updated: Announcement[]) => {
     setAnnouncements(updated);
     localStorage.setItem('bu_admin_announcements', JSON.stringify(updated));
+    syncToAPI('announcements', updated);
     showNotification('success', 'Announcement saved');
   };
 
@@ -327,6 +339,7 @@ export default function AdminDashboard() {
   const saveAdSlots = (updated: AdSlot[]) => {
     setAdSlots(updated);
     localStorage.setItem('bu_admin_ad_slots', JSON.stringify(updated));
+    syncToAPI('ad_slots', updated.map(a => ({ id: a.id, page: a.page || a.position || 'all', position: a.position, size: a.size || '728x90', enabled: a.enabled, code: a.code, priority: a.priority || 1, name: a.name })));
     showNotification('success', 'Ad slot updated');
   };
 
@@ -342,6 +355,7 @@ export default function AdminDashboard() {
   const saveAffiliateLinks = (updated: AffiliateLink[]) => {
     setAffiliates(updated);
     localStorage.setItem('bu_admin_affiliates', JSON.stringify(updated));
+    syncToAPI('affiliate_links', updated);
     showNotification('success', 'Affiliate link saved');
   };
 
@@ -357,6 +371,7 @@ export default function AdminDashboard() {
   const saveSocialLinks = (updated: SocialLinks) => {
     setSocialLinks(updated);
     localStorage.setItem('bu_admin_social_links', JSON.stringify(updated));
+    syncToAPI('social_links', updated);
     showNotification('success', 'Social links saved');
   };
 
@@ -1785,11 +1800,15 @@ function AnnouncementsModule({ announcements, onSave, form, onForm }: {
 
 function getDefaultAdSlots(): AdSlot[] {
   return [
-    { id: 'mainpage-top', name: 'Homepage Top Banner', position: 'mainpage-top', code: '', enabled: true },
-    { id: 'mainpage-inline', name: 'Homepage Inline Ad', position: 'mainpage-inline', code: '', enabled: true },
-    { id: 'coins-top', name: 'Coins Page Top', position: 'coins-top', code: '', enabled: true },
-    { id: 'sidebar', name: 'Sidebar Ad', position: 'sidebar', code: '', enabled: true },
-    { id: 'footer', name: 'Footer Ad', position: 'footer', code: '', enabled: false },
+    { id: 'mainpage', page: 'mainpage', name: 'Homepage Top Banner', position: 'header-728x90', size: '728x90', code: '', enabled: true, priority: 1 },
+    { id: 'coins', page: 'coins', name: 'Coins Page Top', position: 'sidebar-300x250', size: '300x250', code: '', enabled: true, priority: 2 },
+    { id: 'blog', page: 'blog', name: 'Blog Page', position: 'sponsored-article', size: 'native', code: '', enabled: true, priority: 3 },
+    { id: 'learn', page: 'learn', name: 'Learn Bitcoin', position: 'inline-336x280', size: '336x280', code: '', enabled: true, priority: 4 },
+    { id: 'airdrops', page: 'airdrops', name: 'Airdrops', position: 'inline-336x280', size: '336x280', code: '', enabled: true, priority: 5 },
+    { id: 'jobs', page: 'jobs', name: 'Jobs', position: 'inline-336x280', size: '336x280', code: '', enabled: false, priority: 6 },
+    { id: 'markets', page: 'markets', name: 'Markets', position: 'inline-336x280', size: '336x280', code: '', enabled: false, priority: 7 },
+    { id: 'news', page: 'news', name: 'News Page', position: 'inline-336x280', size: '336x280', code: '', enabled: false, priority: 8 },
+    { id: 'research', page: 'research', name: 'Research', position: 'inline-336x280', size: '336x280', code: '', enabled: false, priority: 9 },
   ];
 }
 
